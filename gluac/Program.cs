@@ -118,7 +118,7 @@ namespace gluac {
 			Lua.GetGlobal(L, "dumpBytecode");
 
 			Lua.GetGlobal(L, "string");
-			Lua.PushString(L, "dump");
+			Lua.PushString(L, "dump"); // Yes, it uses string.dump, and no, i'm not gonna implement proper dump function (lazy)
 			Lua.GetTable(L, -2);
 			if (ErrorCheck(L, Lua.LoadString(L, In)))
 				return;
