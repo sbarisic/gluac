@@ -63,7 +63,8 @@ namespace gluac {
 			if (Msg.Length > 0)
 				Console.WriteLine("gluac: {0}{1}", Msg, Arg);
 			Console.WriteLine("usage: gluac [options] [filenames].  Available options are:\n"
-				+ "  -        process stdin\n" + "  -l       list\n" + "  -o file  output file (default is \"" + DefaultOut + "\")\n"
+				+ "  -        process stdin\n"
+				+ "  -l       list [disabled]\n" + "  -o file  output file (default is \"" + DefaultOut + "\")\n"
 				+ "  -p       parse only\n"
 				+ "  -s       strip debug information [disabled]\n"
 				+ "  -t       test code integrity [disabled]\n"
