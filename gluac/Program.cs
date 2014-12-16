@@ -9,13 +9,12 @@ using GSharp;
 
 namespace gluac {
 	unsafe class Program {
-		static bool ErrorCheck(IntPtr L, int I) {
+		static void ErrorCheck(IntPtr L, int I) {
 			if (I != 0) {
 				Console.WriteLine("error: {0}", Lua.ToString(L, -1));
 				Lua.Pop(L);
-				return true;
+				Environment.Exit(2);
 			}
-			return false;
 		}
 
 		static bool Listing = false;
@@ -46,7 +45,7 @@ namespace gluac {
 					Testing = true;
 					Dumping = false;
 				} else if (Argv[i] == ("-v"))                    /* show version */ {
-					Console.WriteLine("{0}  {0}\n", "<insert gmod lua version>", "<insert lua copyright>");
+					Console.WriteLine("{0}  {1}\n", "GLua X.Y", "<insert copyright here>");
 					if (Argv.Length == 2)
 						Environment.Exit(0);
 				} else                                  /* unknown option */
@@ -68,8 +67,12 @@ namespace gluac {
 				+ "  -p       parse only\n"
 				+ "  -s       strip debug information [disabled]\n"
 				+ "  -t       test code integrity [disabled]\n"
-				+ "  -v       show version information [disabled]\n");
+				+ "  -v       show version information\n");
 			Environment.Exit(1);
+		}
+
+		static void Warn(string Msg) {
+			Console.WriteLine("WARNING: {0}", Msg);
 		}
 
 		static void Main(string[] Args) {
@@ -82,7 +85,9 @@ namespace gluac {
 				Out = DefaultOut;
 
 			if (!File.Exists("lua_shared.dll"))
-				Usage("lua_shared.dll not found", "");
+				Warn("lua_shared.dll not found");
+			if (!File.Exists("tier0.dll"))
+				Warn("tier0.dll not found");
 
 			for (int i = ii; i < Argc; i++) {
 				string In = (Args[i] == "-" ? Console.ReadLine() : File.ReadAllText(Args[i])).Trim();
@@ -120,12 +125,10 @@ namespace gluac {
 			Lua.GetGlobal(L, "string");
 			Lua.PushString(L, "dump"); // Yes, it uses string.dump, and no, i'm not gonna implement proper dump function (lazy)
 			Lua.GetTable(L, -2);
-			if (ErrorCheck(L, Lua.LoadString(L, In)))
-				return;
+			ErrorCheck(L, Lua.LoadString(L, In));
 			ErrorCheck(L, Lua.PCall(L, 1, 1, 0));
 			Lua.Replace(L, -2);
 			ErrorCheck(L, Lua.PCall(L, 1, 0, 0));
-
 			Lua.Close(L);
 		}
 	}
