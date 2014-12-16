@@ -6,22 +6,25 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using GSharp;
+using Microsoft.Win32;
 
 namespace gluac {
 	unsafe class Program {
-		static bool ErrorCheck(IntPtr L, int I) {
+		static void ErrorCheck(IntPtr L, int I) {
 			if (I != 0) {
 				Console.WriteLine("error: {0}", Lua.ToString(L, -1));
 				Lua.Pop(L);
-				return true;
+				Environment.Exit(2);
 			}
-			return false;
 		}
 
 		static bool Listing = false;
 		static bool Dumping = true;
 		static bool Stripping = false;
 		static bool Testing = false;
+        //Grab the exe path.
+        static string exePath = System.IO.Path.GetDirectoryName(@System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
+        
 		static string DefaultOut = "gluac.out";
 		static string Out = "";
 
@@ -46,11 +49,11 @@ namespace gluac {
 					Testing = true;
 					Dumping = false;
 				} else if (Argv[i] == ("-v"))                    /* show version */ {
-					Console.WriteLine("{0}  {0}\n", "<insert gmod lua version>", "<insert lua copyright>");
+					Console.WriteLine("{0}  {1}\n", "GLua X.Y", "<insert copyright here>");
 					if (Argv.Length == 2)
 						Environment.Exit(0);
 				} else                                  /* unknown option */
-					Usage("unrecognized option `%s'", Argv[i]);
+					Usage("unrecognized option ", Argv[i]);
 			}
 			if (i == Argv.Length && (Listing || Testing)) {
 				Dumping = false;
@@ -68,8 +71,12 @@ namespace gluac {
 				+ "  -p       parse only\n"
 				+ "  -s       strip debug information [disabled]\n"
 				+ "  -t       test code integrity [disabled]\n"
-				+ "  -v       show version information [disabled]\n");
+				+ "  -v       show version information\n");
 			Environment.Exit(1);
+		}
+
+		static void Warn(string Msg) {
+			Console.WriteLine("WARNING: {0}", Msg);
 		}
 
 		static void Main(string[] Args) {
@@ -81,9 +88,15 @@ namespace gluac {
 			if (Out.Length == 0)
 				Out = DefaultOut;
 
-			if (!File.Exists("lua_shared.dll"))
-				Usage("lua_shared.dll not found", "");
-
+            //Just peel the uri from the start of the string so we can do a quick File.Exists check. 
+            //This is required for things like Sublime where it actually checks for dependancies in the current working directory
+            //as opposed to where the executable launches from already.
+            exePath = exePath.Remove(0, 6);
+            if (!File.Exists(@exePath + @"\lua_shared.dll"))
+                Warn(exePath + @"\lua_shared.dll not found");
+            if (!File.Exists(exePath + @"\tier0.dll"))
+                Warn(exePath + @"\tier0.dll not found");
+            
 			for (int i = ii; i < Argc; i++) {
 				string In = (Args[i] == "-" ? Console.ReadLine() : File.ReadAllText(Args[i])).Trim();
 				Run(In, Out);
@@ -120,12 +133,10 @@ namespace gluac {
 			Lua.GetGlobal(L, "string");
 			Lua.PushString(L, "dump"); // Yes, it uses string.dump, and no, i'm not gonna implement proper dump function (lazy)
 			Lua.GetTable(L, -2);
-			if (ErrorCheck(L, Lua.LoadString(L, In)))
-				return;
+			ErrorCheck(L, Lua.LoadString(L, In));
 			ErrorCheck(L, Lua.PCall(L, 1, 1, 0));
 			Lua.Replace(L, -2);
 			ErrorCheck(L, Lua.PCall(L, 1, 0, 0));
-
 			Lua.Close(L);
 		}
 	}
