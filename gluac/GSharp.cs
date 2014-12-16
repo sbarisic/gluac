@@ -4,7 +4,7 @@ using System.Windows.Forms;
 using System.Text;
 using System.IO;
 using System.Collections.Generic;
-using System.Dynamic;
+//using System.Dynamic;
 
 namespace GSharp {
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -444,6 +444,7 @@ namespace GSharp {
 			PushCClosure(State, F, 0);
 		}
 
+		/*
 		public static void Push(IntPtr L, object O) {
 			if (O == null)
 				Lua.PushNil(L);
@@ -469,7 +470,9 @@ namespace GSharp {
 			} else
 				throw new Exception("Invalid type " + O.GetType().FullName);
 		}
+		//*/
 
+		/*
 		public static object To(IntPtr L, int I = -1, params string[] Pth) {
 			int T = Lua.Type(L, I);
 
@@ -502,6 +505,7 @@ namespace GSharp {
 
 			return null;
 		}
+		//*/
 
 		public static void GetGlobal(IntPtr L, string Key) {
 			Lua.GetField(L, Lua.GLOBALSINDEX, Key);
@@ -601,6 +605,7 @@ namespace GSharp {
 		}
 	}
 
+	/*
 	public class LuaObject : DynamicObject {
 		public IntPtr L;
 
@@ -668,4 +673,5 @@ namespace GSharp {
 			}
 		}
 	}
+	//*/
 }
