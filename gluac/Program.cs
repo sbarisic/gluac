@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using GSharp;
+using Microsoft.Win32;
 
 namespace gluac {
 	unsafe class Program {
@@ -21,6 +22,8 @@ namespace gluac {
 		static bool Dumping = true;
 		static bool Stripping = false;
 		static bool Testing = false;
+        static string exePath = System.IO.Path.GetDirectoryName(@System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
+ 
 		static string DefaultOut = "gluac.out";
 		static string Out = "";
 
@@ -49,7 +52,7 @@ namespace gluac {
 					if (Argv.Length == 2)
 						Environment.Exit(0);
 				} else                                  /* unknown option */
-					Usage("unrecognized option `%s'", Argv[i]);
+					Usage("unrecognized option ", Argv[i]);
 			}
 			if (i == Argv.Length && (Listing || Testing)) {
 				Dumping = false;
@@ -84,11 +87,18 @@ namespace gluac {
 			if (Out.Length == 0)
 				Out = DefaultOut;
 
-			if (!File.Exists("lua_shared.dll"))
-				Warn("lua_shared.dll not found");
-			if (!File.Exists("tier0.dll"))
-				Warn("tier0.dll not found");
 
+              //  string baseInstallPath = userReg.GetValue("SourceModInstallPath").ToString();
+
+                Console.WriteLine("Found install path! Path is " + exePath);
+
+
+
+                if (!File.Exists(@exePath + @"\lua_shared.dll"))
+                    Warn(exePath + @"\lua_shared.dll not found");
+                if (!File.Exists(exePath + @"\tier0.dll"))
+                    Warn(exePath + @"\egewgewgetier0.dll not found");
+            
 			for (int i = ii; i < Argc; i++) {
 				string In = (Args[i] == "-" ? Console.ReadLine() : File.ReadAllText(Args[i])).Trim();
 				Run(In, Out);
