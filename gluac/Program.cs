@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using GSharp;
+using Microsoft.Win32;
 
 namespace gluac {
 	unsafe class Program {
@@ -17,6 +18,7 @@ namespace gluac {
 			}
 		}
 
+        static string exePath = System.IO.Path.GetDirectoryName(@System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
 		static bool Listing = false;
 		static bool Dumping = true;
 		static bool Stripping = false;
@@ -49,7 +51,7 @@ namespace gluac {
 					if (Argv.Length == 2)
 						Environment.Exit(0);
 				} else                                  /* unknown option */
-					Usage("unrecognized option `%s'", Argv[i]);
+					Usage("unrecognized option ", Argv[i]);
 			}
 			if (i == Argv.Length && (Listing || Testing)) {
 				Dumping = false;
@@ -63,13 +65,25 @@ namespace gluac {
 				Console.WriteLine("gluac: {0}{1}", Msg, Arg);
 			Console.WriteLine("usage: gluac [options] [filenames].  Available options are:\n"
 				+ "  -        process stdin\n"
-				+ "  -l       list [disabled]\n" + "  -o file  output file (default is \"" + DefaultOut + "\")\n"
+				+ "  -l       list [disabled]\n"
+                + "  -o file  output file (default is \"" + DefaultOut + "\")\n"
 				+ "  -p       parse only\n"
 				+ "  -s       strip debug information [disabled]\n"
 				+ "  -t       test code integrity [disabled]\n"
 				+ "  -v       show version information\n");
 			Environment.Exit(1);
 		}
+
+        static bool Exists(string Name) {
+            if (File.Exists(@exePath + @Name))
+                return true;
+            foreach (string test in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';')) {
+                string path = test.Trim();
+                if (!String.IsNullOrEmpty(path) && File.Exists(path = Path.Combine(path, Name)))
+                    return true;
+            }
+            return false;
+        }
 
 		static void Warn(string Msg) {
 			Console.WriteLine("WARNING: {0}", Msg);
@@ -84,9 +98,10 @@ namespace gluac {
 			if (Out.Length == 0)
 				Out = DefaultOut;
 
-			if (!File.Exists("lua_shared.dll"))
+            exePath = exePath.Remove(0, 6);
+            if (!Exists("lua_shared.dll"))
 				Warn("lua_shared.dll not found");
-			if (!File.Exists("tier0.dll"))
+            if (!Exists("tier0.dll"))
 				Warn("tier0.dll not found");
 
 			for (int i = ii; i < Argc; i++) {
