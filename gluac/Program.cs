@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using GSharp;
+using Microsoft.Win32;
 
 namespace gluac {
 	unsafe class Program {
@@ -21,6 +22,9 @@ namespace gluac {
 		static bool Dumping = true;
 		static bool Stripping = false;
 		static bool Testing = false;
+        //Grab the exe path.
+        static string exePath = System.IO.Path.GetDirectoryName(@System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
+        
 		static string DefaultOut = "gluac.out";
 		static string Out = "";
 
@@ -49,7 +53,7 @@ namespace gluac {
 					if (Argv.Length == 2)
 						Environment.Exit(0);
 				} else                                  /* unknown option */
-					Usage("unrecognized option `%s'", Argv[i]);
+					Usage("unrecognized option ", Argv[i]);
 			}
 			if (i == Argv.Length && (Listing || Testing)) {
 				Dumping = false;
@@ -84,11 +88,15 @@ namespace gluac {
 			if (Out.Length == 0)
 				Out = DefaultOut;
 
-			if (!File.Exists("lua_shared.dll"))
-				Warn("lua_shared.dll not found");
-			if (!File.Exists("tier0.dll"))
-				Warn("tier0.dll not found");
-
+            //Just peel the uri from the start of the string so we can do a quick File.Exists check. 
+            //This is required for things like Sublime where it actually checks for dependancies in the current working directory
+            //as opposed to where the executable launches from already.
+            exePath = exePath.Remove(0, 6);
+            if (!File.Exists(@exePath + @"\lua_shared.dll"))
+                Warn(exePath + @"\lua_shared.dll not found");
+            if (!File.Exists(exePath + @"\tier0.dll"))
+                Warn(exePath + @"\tier0.dll not found");
+            
 			for (int i = ii; i < Argc; i++) {
 				string In = (Args[i] == "-" ? Console.ReadLine() : File.ReadAllText(Args[i])).Trim();
 				Run(In, Out);
