@@ -18,7 +18,6 @@ namespace gluac {
 			}
 		}
 
-        static string exePath = System.IO.Path.GetDirectoryName(@System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
 		static bool Listing = false;
 		static bool Dumping = true;
 		static bool Stripping = false;
@@ -66,7 +65,7 @@ namespace gluac {
 			Console.WriteLine("usage: gluac [options] [filenames].  Available options are:\n"
 				+ "  -        process stdin\n"
 				+ "  -l       list [disabled]\n"
-                + "  -o file  output file (default is \"" + DefaultOut + "\")\n"
+				+ "  -o file  output file (default is \"" + DefaultOut + "\")\n"
 				+ "  -p       parse only\n"
 				+ "  -s       strip debug information [disabled]\n"
 				+ "  -t       test code integrity [disabled]\n"
@@ -74,16 +73,16 @@ namespace gluac {
 			Environment.Exit(1);
 		}
 
-        static bool Exists(string Name) {
-            if (File.Exists(@exePath + @Name))
-                return true;
-            foreach (string test in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';')) {
-                string path = test.Trim();
-                if (!String.IsNullOrEmpty(path) && File.Exists(path = Path.Combine(path, Name)))
-                    return true;
-            }
-            return false;
-        }
+		static bool Exists(string Name) {
+			if (File.Exists(Path.GetFullPath(Name)))
+				return true;
+			foreach (string test in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';')) {
+				string path = test.Trim();
+				if (!String.IsNullOrEmpty(path) && File.Exists(path = Path.Combine(path, Name)))
+					return true;
+			}
+			return false;
+		}
 
 		static void Warn(string Msg) {
 			Console.WriteLine("WARNING: {0}", Msg);
@@ -98,19 +97,18 @@ namespace gluac {
 			if (Out.Length == 0)
 				Out = DefaultOut;
 
-            exePath = exePath.Remove(0, 6);
-            if (!Exists("lua_shared.dll"))
+			if (!Exists("lua_shared.dll"))
 				Warn("lua_shared.dll not found");
-            if (!Exists("tier0.dll"))
+			if (!Exists("tier0.dll"))
 				Warn("tier0.dll not found");
 
 			for (int i = ii; i < Argc; i++) {
 				string In = (Args[i] == "-" ? Console.ReadLine() : File.ReadAllText(Args[i])).Trim();
-				Run(In, Out);
+				Run(In, Out, (Args[i] != "-") ? Path.GetFileName(Path.GetFullPath(Args[i])) : "STDIN");
 			}
 		}
 
-		static void Run(string In, string Out) {
+		static void Run(string In, string Out, string ChunkName = "-") {
 			IntPtr L = Lua.NewState();
 			Lua.OpenLibs(L);
 			Lua.AtPanic(L, (LL) => {
@@ -140,7 +138,7 @@ namespace gluac {
 			Lua.GetGlobal(L, "string");
 			Lua.PushString(L, "dump"); // Yes, it uses string.dump, and no, i'm not gonna implement proper dump function (lazy)
 			Lua.GetTable(L, -2);
-			ErrorCheck(L, Lua.LoadString(L, In));
+			ErrorCheck(L, Lua.LoadBuffer(L, In, ChunkName));
 			ErrorCheck(L, Lua.PCall(L, 1, 1, 0));
 			Lua.Replace(L, -2);
 			ErrorCheck(L, Lua.PCall(L, 1, 0, 0));

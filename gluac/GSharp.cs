@@ -40,6 +40,16 @@ namespace GSharp {
 			return R;
 		}
 
+		static T StrToPtr<T>(string Str1, string Str2, Func<IntPtr, IntPtr, T> F) {
+			T R;
+			IntPtr StrPtr1 = Marshal.StringToHGlobalAnsi(Str1);
+			IntPtr StrPtr2 = Marshal.StringToHGlobalAnsi(Str2);
+			R = F(StrPtr1, StrPtr2);
+			Marshal.FreeHGlobal(StrPtr1);
+			Marshal.FreeHGlobal(StrPtr2);
+			return R;
+		}
+
 		static List<LuaFunc> LuaFuncs = new List<LuaFunc>();
 		const string LIBNAME = "lua_shared.dll";
 		const CallingConvention CConv = CallingConvention.Cdecl;
@@ -190,7 +200,13 @@ namespace GSharp {
 		}
 
 		[DllImport(LIBNAME, CallingConvention = CConv, CharSet = CSet, EntryPoint = "luaL_loadbuffer")]
-		public static extern int LoadBuffer(IntPtr State, string S, int I, string S2);
+		static extern int _LoadBuffer(IntPtr State, IntPtr S, int I, IntPtr S2);
+
+		public static int LoadBuffer(IntPtr State, string S, string ChunkName) {
+			return StrToPtr<int>(S, ChunkName, (Sp1, Sp2) => {
+				return _LoadBuffer(State, Sp1, S.Length, Sp2);
+			});
+		}
 
 		[DllImport(LIBNAME, CallingConvention = CConv, CharSet = CSet, EntryPoint = "luaL_loadstring")]
 		public static extern int LoadString(IntPtr State, IntPtr S);
