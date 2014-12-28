@@ -12,7 +12,11 @@ namespace gluac {
 	unsafe class Program {
 		static void ErrorCheck(IntPtr L, int I) {
 			if (I != 0) {
-				Console.WriteLine("error: {0}", Lua.ToString(L, -1));
+				string ErrMsg = Lua.ToString(L, -1);
+				if (ErrMsg.Contains("[string \""))
+					ErrMsg = ErrMsg.Replace("[string \"", "").Replace("\"]:", ":");
+
+				Console.WriteLine("error: {0}", ErrMsg);
 				Lua.Pop(L);
 				Environment.Exit(2);
 			}
@@ -88,6 +92,10 @@ namespace gluac {
 			Console.WriteLine("WARNING: {0}", Msg);
 		}
 
+		static string Read() {
+			return Console.In.ReadToEnd();
+		}
+
 		static void Main(string[] Args) {
 			int ii = DoArgs(ref Args);
 			int Argc = Args.Length;
@@ -103,12 +111,15 @@ namespace gluac {
 				Warn("tier0.dll not found");
 
 			for (int i = ii; i < Argc; i++) {
-				string In = (Args[i] == "-" ? Console.ReadLine() : File.ReadAllText(Args[i])).Trim();
-				Run(In, Out, (Args[i] != "-") ? Path.GetFileName(Path.GetFullPath(Args[i])) : "STDIN");
+				string In = (Args[i] == "-" ? Read() : File.ReadAllText(Args[i])).Trim();
+				string ChunkName = "stdin";
+				if (Args[i] != "-")
+					ChunkName = Path.GetFileName(Path.GetFullPath(Args[i]));
+				Run(In, Out, ChunkName);
 			}
 		}
 
-		static void Run(string In, string Out, string ChunkName = "-") {
+		static void Run(string In, string Out, string ChunkName) {
 			IntPtr L = Lua.NewState();
 			Lua.OpenLibs(L);
 			Lua.AtPanic(L, (LL) => {
@@ -132,9 +143,7 @@ namespace gluac {
 			});
 
 			Lua.SetTop(L, 0);
-
 			Lua.GetGlobal(L, "dumpBytecode");
-
 			Lua.GetGlobal(L, "string");
 			Lua.PushString(L, "dump"); // Yes, it uses string.dump, and no, i'm not gonna implement proper dump function (lazy)
 			Lua.GetTable(L, -2);
