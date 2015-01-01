@@ -111,7 +111,7 @@ namespace gluac {
 				Warn("tier0.dll not found");
 
 			for (int i = ii; i < Argc; i++) {
-				string In = (Args[i] == "-" ? Read() : File.ReadAllText(Args[i])).Trim();
+				string In = (Args[i] == "-" ? Read() : File.ReadAllText(Args[i]));
 				string ChunkName = "stdin";
 				if (Args[i] != "-")
 					ChunkName = Path.GetFileName(Path.GetFullPath(Args[i]));
