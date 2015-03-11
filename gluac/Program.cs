@@ -97,6 +97,15 @@ namespace gluac {
 		}
 
 		static void Main(string[] Args) {
+			try {
+				SafeMain(Args);
+			} catch (Exception E) {
+				Console.WriteLine(E);
+				Console.ReadLine();
+			}
+		}
+
+		static void SafeMain(string[] Args) {
 			int ii = DoArgs(ref Args);
 			int Argc = Args.Length;
 			if (Argc <= 0)
