@@ -51,7 +51,7 @@ namespace GSharp {
 		}
 
 		static List<LuaFunc> LuaFuncs = new List<LuaFunc>();
-		const string LIBNAME = "lua_shared.dll";
+		const string LIBNAME = "lua_shared";
 		const CallingConvention CConv = CallingConvention.Cdecl;
 		const CharSet CSet = CharSet.Auto;
 

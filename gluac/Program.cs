@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Runtime.InteropServices;
-
+using System.Diagnostics;
 using GSharp;
 using Microsoft.Win32;
 
@@ -97,12 +97,27 @@ namespace gluac {
 		}
 
 		static void Main(string[] Args) {
-			try {
+			if (Debugger.IsAttached) {
+				Console.WriteLine("INFO: Debugger attached, skipping try block");
 				SafeMain(Args);
-			} catch (Exception E) {
-				Console.WriteLine(E);
-				Console.ReadLine();
+			} else {
+				try {
+					SafeMain(Args);
+				} catch (Exception E) {
+					Console.WriteLine(E);
+					Console.ReadLine();
+				}
 			}
+		}
+
+		static void WarnIfNotExists(string DllName) {
+			if (!Exists(DllName))
+				Warn(string.Format("{0} not found", DllName));
+		}
+
+		static void WarnIfNotExists(params string[] DllNames) {
+			foreach (var DllName in DllNames)
+				WarnIfNotExists(DllName);
 		}
 
 		static void SafeMain(string[] Args) {
@@ -114,16 +129,15 @@ namespace gluac {
 			if (Out.Length == 0)
 				Out = DefaultOut;
 
-			if (!Exists("lua_shared.dll"))
-				Warn("lua_shared.dll not found");
-			if (!Exists("tier0.dll"))
-				Warn("tier0.dll not found");
+			WarnIfNotExists("lua_shared.dll", "tier0.dll", "vstdlib.dll");
 
 			for (int i = ii; i < Argc; i++) {
 				string In = (Args[i] == "-" ? Read() : File.ReadAllText(Args[i]));
 				string ChunkName = "stdin";
+
 				if (Args[i] != "-")
 					ChunkName = Path.GetFileName(Path.GetFullPath(Args[i]));
+
 				Run(In, Out, ChunkName);
 			}
 		}

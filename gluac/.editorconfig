@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CA1401: P/Invokes should not be visible
+dotnet_diagnostic.CA1401.severity = none
